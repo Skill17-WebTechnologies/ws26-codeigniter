@@ -1,0 +1,34 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      CI_ENVIRONMENT: development
+      database.default.hostname: db
+      database.default.database: ci4
+      database.default.username: ci4
+      database.default.password: ci4
+      database.default.DBDriver: MySQLi
+      database.default.port: "3306"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ci4
+      MYSQL_USER: ci4
+      MYSQL_PASSWORD: ci4
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - ci4-db:/var/lib/mysql
+volumes:
+  ci4-db:
