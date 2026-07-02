@@ -19,4 +19,4 @@ for i in $(seq 1 40); do
   if php spark migrate --all -n >/tmp/migrate.log 2>&1; then echo "migrations applied"; break; fi
   echo "  db not ready yet ($i)"; sleep 3
 done
-exec php spark serve --host 0.0.0.0 --port 8080
+exec php spark serve --host 0.0.0.0 --port 80

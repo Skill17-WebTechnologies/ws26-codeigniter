@@ -12,5 +12,5 @@ RUN composer install --no-interaction --prefer-dist --no-scripts
 COPY . .
 COPY docker-entrypoint.sh /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint && chmod -R 777 writable
-EXPOSE 8080
+EXPOSE 80
 ENTRYPOINT ["entrypoint"]
