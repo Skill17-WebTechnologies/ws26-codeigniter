@@ -9,7 +9,7 @@ A real **CodeIgniter 4.6.5** application (WorldSkills 2026 Web Technologies, TP1
 docker compose up --build
 ```
 
-Then open **http://localhost:8080**. The database is a `db` service (MySQL 8.4) and its data
+Then open **http://localhost**. The database is a `db` service (MySQL 8.4) and its data
 persists in a Docker volume. Stop with `docker compose down` (add `-v` to also drop the DB).
 
 ## Develop
