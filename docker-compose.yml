@@ -3,22 +3,3 @@ services:
     build: .
     ports:
       - "80:80"
-    depends_on:
-      db:
-        condition: service_healthy
-  db:
-    image: mysql:8.4
-    environment:
-      MYSQL_DATABASE: ci4
-      MYSQL_USER: ci4
-      MYSQL_PASSWORD: ci4
-      MYSQL_ROOT_PASSWORD: root
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-    volumes:
-      - ci4-db:/var/lib/mysql
-volumes:
-  ci4-db:
