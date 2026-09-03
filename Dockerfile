@@ -1,10 +1,16 @@
 FROM php:8.3-cli-bookworm
 COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer
+# sqlite3 is deliberately absent from the extension list below. It is already
+# compiled into the php:8.3 image (`php -m` lists it), and asking
+# docker-php-ext-install to build it again aborts the whole build with
+# "Cannot find config.m4" — which is why this image could not be built at all.
+# CodeIgniter's SQLite3 database driver still works: the extension is present,
+# it simply is not rebuilt here.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip libzip-dev libicu-dev libonig-dev libxml2-dev libsqlite3-dev \
         libpng-dev libjpeg-dev libfreetype6-dev \
     && docker-php-ext-configure gd --with-jpeg --with-freetype \
-    && docker-php-ext-install -j"$(nproc)" intl sqlite3 pdo_sqlite zip bcmath gd exif pcntl sockets mbstring dom xml \
+    && docker-php-ext-install -j"$(nproc)" intl pdo_sqlite zip bcmath gd exif pcntl sockets mbstring dom xml \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY composer.json composer.lock ./
