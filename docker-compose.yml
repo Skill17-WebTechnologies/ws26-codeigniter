@@ -1,5 +1,46 @@
+# Every value below comes from .env — Compose reads that file automatically.
+# Start by copying the template:  cp .env.example .env
+#
+# No credential is written down here: the app and the database server both read
+# the same file, so they cannot drift apart.
 services:
   app:
     build: .
     ports:
       - "80:80"
+    # CodeIgniter's DotEnv never overwrites a variable that is already in the
+    # environment, so these win over the .env.prod the entrypoint copies into the
+    # image — which is what makes local development work without editing a file
+    # that belongs to the deployment.
+    environment:
+      CI_ENVIRONMENT: development
+      # Inside the compose network the database answers to its service name.
+      database.default.hostname: db
+      database.default.port: "3306"
+      database.default.database: "${MYSQL_DATABASE}"
+      database.default.username: "${MYSQL_USER}"
+      database.default.password: "${MYSQL_PASSWORD}"
+      database.default.DBDriver: MySQLi
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  db-data:
