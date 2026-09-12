@@ -1,25 +1,28 @@
 #!/usr/bin/env bash
 set -e
 cd /app
-[ -f .env ] || cp env .env
 
-# SQLite only — no external database server. CodeIgniter's SQLite3 driver stores the
-# database as a file under writable/.
+# The platform writes this competitor's own credentials into .env.prod. Copy it
+# over .env so the deployed app reads the deployed configuration.
 #
-# The path must NOT contain a directory separator. system/Database/SQLite3/Connection.php
-# prepends WRITEPATH only when the configured value has no separator in it; give it
-# "writable/database.db" and it is instead resolved against the current working
-# directory, which is not the project root, and every connection fails with
-# "SQLite3 error: Unable to open database: unable to open database file".
-if ! grep -q '^database.default.DBDriver' .env; then
-  cat >> .env <<'EOL'
-
-CI_ENVIRONMENT = development
-database.default.DBDriver = SQLite3
-database.default.database = database.db
-EOL
+# Local development keeps its own .env, which is gitignored and never shipped —
+# docker-compose.yml passes those values as environment variables instead, and
+# CodeIgniter's DotEnv never overwrites a variable that is already set.
+if [ -f .env.prod ]; then
+  cp .env.prod .env
+elif [ ! -f .env ]; then
+  cp .env.example .env
 fi
 
-mkdir -p writable
-php spark migrate --all -n || true
+# See the script for why this is needed: CodeIgniter's env() prefers $_ENV, which
+# its DotEnv fills from .env — so an empty value in the file shadows a variable
+# injected by compose or Kubernetes unless it is written into the file first.
+php docker/sync-env.php
+
+# Never fatal: a database that is unreachable for a moment should leave the app
+# serving its error page — and /api/db-check reporting exactly why — rather than
+# crash-looping the container.
+php spark migrate --all -n || \
+  echo "migrations not applied — see /api/db-check for the reason" >&2
+
 exec php spark serve --host 0.0.0.0 --port 80

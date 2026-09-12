@@ -6,11 +6,16 @@ COPY --from=composer:2.9.5 /usr/bin/composer /usr/bin/composer
 # "Cannot find config.m4" — which is why this image could not be built at all.
 # CodeIgniter's SQLite3 database driver still works: the extension is present,
 # it simply is not rebuilt here.
+#
+# mysqli AND pdo_mysql ARE built: the app runs on MySQL, and CodeIgniter's
+# default DBDriver is MySQLi while app/Config/Database.php can be switched to
+# PDO. Without them the app fails with "could not find driver". Both use the
+# bundled mysqlnd, so neither needs an extra system package.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip libzip-dev libicu-dev libonig-dev libxml2-dev libsqlite3-dev \
         libpng-dev libjpeg-dev libfreetype6-dev \
     && docker-php-ext-configure gd --with-jpeg --with-freetype \
-    && docker-php-ext-install -j"$(nproc)" intl pdo_sqlite zip bcmath gd exif pcntl sockets mbstring dom xml \
+    && docker-php-ext-install -j"$(nproc)" intl pdo_sqlite mysqli pdo_mysql zip bcmath gd exif pcntl sockets mbstring dom xml \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY composer.json composer.lock ./
